@@ -29,7 +29,49 @@ try:
 except NameError:
     from sets import Set as set     # Python 2.3 fallback
 
-__all__ = ['Query', 'BaseQuery']
+__all__ = ['Query', 'BaseQuery', 'RawQuery', 'InvalidQueryException']
+
+class InvalidQueryException(Exception):
+    """
+    The query passed to raw isn't a safe query to use with raw.
+    """
+    pass
+
+class RawQuery(object):
+    """
+    A single raw SQL query
+    """
+    
+    def __init__(self, query, connection, params=None):
+        self.validate_query(query)
+        if params is None:
+            params = ()
+        self.params = params
+        self.query = query
+        self.connection = connection
+        self.cursor = connection.cursor()
+        self.cursor.execute(query, params)
+        
+        
+    def get_columns(self):
+        return [column_meta[0] for column_meta in self.cursor.description]
+        
+    def validate_query(self, query):
+        if not query.lower().startswith('select'):
+            raise InvalidQueryException('Raw SQL are limited to SELECT queries.  Use connection.cursor for any other query types.')
+            
+    def __len__(self):
+        return self.cursor.rowcount
+        
+    def __iter__(self):
+           values = self.cursor.fetchone()
+           while values:
+               yield self._transform_result(values)
+               values = self.cursor.fetchone()
+               
+    def __str__(self):
+        return self.query % self.params
+    
 
 class BaseQuery(object):
     """
