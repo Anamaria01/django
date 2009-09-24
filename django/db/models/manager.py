@@ -180,7 +180,7 @@ class Manager(object):
         return self.get_query_set()._update(values, **kwargs)
         
     def raw(self, *args, **kwargs):
-        return RawQuerySet(*args, **kwargs)
+        return RawQuerySet(model=self.model, *args, **kwargs)
 
 class ManagerDescriptor(object):
     # This class ensures managers aren't accessible via model instances.
