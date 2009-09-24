@@ -1,6 +1,6 @@
 import copy
 
-from django.db.models.query import QuerySet, EmptyQuerySet, insert_query
+from django.db.models.query import QuerySet, EmptyQuerySet, insert_query, RawQuerySet
 from django.db.models import signals
 from django.db.models.fields import FieldDoesNotExist
 
@@ -178,6 +178,9 @@ class Manager(object):
 
     def _update(self, values, **kwargs):
         return self.get_query_set()._update(values, **kwargs)
+        
+    def raw(self, *args, **kwargs):
+        return RawQuerySet(*args, **kwargs)
 
 class ManagerDescriptor(object):
     # This class ensures managers aren't accessible via model instances.
