@@ -1089,7 +1089,7 @@ class RawQuerySet(object):
     """
     def __init__(self, query, model=None, query_obj=None, params=None, translations=None):
         self.model = model
-        self.raw_results = query_obj or sql.RawQuery(sql=query, conection=connection, params=params)
+        self.raw_results = query_obj or sql.RawQuery(sql=query, connection=connection, params=params)
         self.query = query
         self.params = params or ()
         self._kwargs = {}
@@ -1122,7 +1122,7 @@ class RawQuerySet(object):
     def __repr__(self):
         return self.query % self.params
             
-    def tranform_results(self, values):
+    def transform_results(self, values):
         kwargs = self._kwargs
         annotations = self._annotations
         

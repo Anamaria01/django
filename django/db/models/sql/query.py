@@ -43,7 +43,7 @@ class RawQuery(object):
     """
     
     def __init__(self, sql, connection, params=None):
-        self.validate_query(sql)
+        self.validate_sql(sql)
         self.params = params or ()
         self.sql = sql
         self.connection = connection
@@ -64,7 +64,7 @@ class RawQuery(object):
     def __iter__(self):
            values = self.cursor.fetchone()
            while values:
-               yield self._transform_result(values)
+               yield values
                values = self.cursor.fetchone()
                
     def __str__(self):
