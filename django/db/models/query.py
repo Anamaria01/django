@@ -1075,6 +1075,12 @@ def delete_objects(seen_objs):
         if forced_managed:
             transaction.leave_transaction_management()
 
+class InsuficientFieldsException(Exception):
+    """
+    The query passed to raw doesn't include all of the fields needed to build 
+    a model instance.
+    """
+    pass
 
 class RawQuerySet(object):
     """
@@ -1132,7 +1138,7 @@ class RawQuerySet(object):
                 
         if len(kwargs) < len(self.model_fields):
             missing = [column for column, field in self.model_fields.items() if field not in kwargs.keys()]
-            raise InsuficientColumnsException("They query passed doesn't contain all of the needed columns.  The missing columns are: %s" % ', '.join(missing))
+            raise InsuficientFieldsException("They query passed doesn't contain all of the needed fields.  The missing fields are: %s" % ', '.join(missing))
             
         # Construct model instance
         instance = self.model(**kwargs)
