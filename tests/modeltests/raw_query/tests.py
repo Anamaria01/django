@@ -2,6 +2,9 @@ from django.test import TestCase
 from datetime import datetime
 from models import Author, Book, Coffee, Reviewer
 
+from django.db.models.query import InsuficientFieldsException
+from django.db.models.sql.query import InvalidQueryException
+
 class RawQueryTests(TestCase):
     
     def setUp(self):
@@ -83,5 +86,74 @@ class RawQueryTests(TestCase):
         self.assertEqual(results._annotations, expected_annotations)
         
     def testSimpleRawQuery(self):
-           query = "SELECT * FROM raw_query_author"
-           self.assertSuccessfulRawQuery(Author, query, self.authors)
+        query = "SELECT * FROM raw_query_author"
+        self.assertSuccessfulRawQuery(Author, query, self.authors)
+
+    def testFkeyRawQuery(self):
+        query = "SELECT * FROM raw_query_book"
+        self.assertSuccessfulRawQuery(Book, query, self.books)
+        
+    def testDBColumnHandler(self):
+        query = "SELECT * FROM raw_query_coffee"
+        self.assertSuccessfulRawQuery(Coffee, query, self.coffees)
+    
+    def testOrderHandler(self):
+        selects = (
+            ('dob, last_name, first_name, id'),
+            ('last_name, dob, first_name, id'),
+            ('first_name, last_name, dob, id'),
+        )
+
+        for select in selects:
+            query = "SELECT %s FROM raw_query_author" % select
+            self.assertSuccessfulRawQuery(Author, query, self.authors)
+            
+    def testTranslations(self):
+        query = "SELECT first_name AS first, last_name AS last, dob, id FROM raw_query_author"
+        translations = (
+            ('first', 'first_name'),
+            ('last', 'last_name'),
+        )
+        self.assertSuccessfulRawQuery(Author, query, self.authors, translations=translations)
+        
+    def testParams(self):
+        query = "SELECT * FROM raw_query_author WHERE first_name = %s"
+        params = [self.authors[2].first_name]
+        results = Author.objects.raw(query=query, params=params)
+        self.assertProcessed(results, [self.authors[2]])
+        self.assertNoAnnotations(results)
+        self.assertEqual(len(results), 1)
+        
+    def testManyToMany(self):
+        query = "SELECT * FROM raw_query_reviewer"
+        self.assertSuccessfulRawQuery(Reviewer, query, self.reviewers)
+        
+    def testExtraConversions(self):
+        query = "SELECT * FROM raw_query_author"
+        translations = (('something', 'else'),)
+        self.assertSuccessfulRawQuery(Author, query, self.authors, translations=translations)
+        
+    def testInsufficientColumns(self):
+        query = "SELECT first_name, dob FROM raw_query_author"
+        raised = False
+        try:
+            results = Author.objects.raw(query)
+            results_list = list(results)
+        except InsuficientFieldsException:
+            raised = True
+
+        self.assertTrue(raised)
+        
+    def testAnnotations(self):
+        query = "SELECT a.*, count(b.id) as book_count FROM raw_query_author a LEFT JOIN raw_query_book b ON a.id = b.author_id GROUP BY a.id, a.first_name, a.last_name, a.dob ORDER BY a.id"
+        expected_annotations = (
+            ('book_count', 3),
+            ('book_count', 0),
+            ('book_count', 1),
+            ('book_count', 0),
+        )
+        self.assertSuccessfulRawQuery(Author, query, self.authors, expected_annotations)
+        
+    def testInvalidQuery(self):
+        query = "UPDATE raw_query_author SET first_name='thing' WHERE first_name='Joe'"
+        self.assertRaises(InvalidQueryException, Author.objects.raw, query)
