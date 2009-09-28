@@ -65,12 +65,18 @@ class RawQueryTests(TestCase):
         
     def assertSuccessfulRawQuery(self, model, query, expected_results, \
             expected_annotations=(), params=[], translations=None):
+        """
+        Execute the passed query against the passed model and check the output
+        """
         results = model.objects.raw(query=query, params=params, \
                             translations=translations)
         self.assertProcessed(results, expected_results, expected_annotations)
         self.assertAnnotations(results, expected_annotations)
         
     def assertProcessed(self, results, orig, expected_annotations=()):
+        """
+        Compare the results of a raw query against expected results
+        """
         self.assertEqual(len(results), len(orig))
         for index, item in enumerate(results):
             orig_item = orig[index]
@@ -80,24 +86,45 @@ class RawQueryTests(TestCase):
             self.assertEqual(item.id, orig_item.id)
 
     def assertNoAnnotations(self, results):
+        """
+        Check that the results of a raw query contain no annotations
+        """
         self.assertAnnotations(results, ())
 
     def assertAnnotations(self, results, expected_annotations):
+        """
+        Check that the passed raw query results contain the expected
+        annotations
+        """
         self.assertEqual(results._annotations, expected_annotations)
         
     def testSimpleRawQuery(self):
+        """
+        Basic test of raw query with a simple database query
+        """
         query = "SELECT * FROM raw_query_author"
         self.assertSuccessfulRawQuery(Author, query, self.authors)
 
     def testFkeyRawQuery(self):
+        """
+        Test of a simple raw query against a model containing a foreign key
+        """
         query = "SELECT * FROM raw_query_book"
         self.assertSuccessfulRawQuery(Book, query, self.books)
         
     def testDBColumnHandler(self):
+        """
+        Test of a simple raw query against a model containing a field with 
+        db_column defined.
+        """
         query = "SELECT * FROM raw_query_coffee"
         self.assertSuccessfulRawQuery(Coffee, query, self.coffees)
     
     def testOrderHandler(self):
+        """
+        Test of raw raw query's tolerance for columns being returned in any
+        order
+        """
         selects = (
             ('dob, last_name, first_name, id'),
             ('last_name, dob, first_name, id'),
@@ -109,6 +136,10 @@ class RawQueryTests(TestCase):
             self.assertSuccessfulRawQuery(Author, query, self.authors)
             
     def testTranslations(self):
+        """
+        Test of raw query's optional ability to translate unexpected result
+        column names to specific model fields
+        """
         query = "SELECT first_name AS first, last_name AS last, dob, id FROM raw_query_author"
         translations = (
             ('first', 'first_name'),
@@ -117,6 +148,9 @@ class RawQueryTests(TestCase):
         self.assertSuccessfulRawQuery(Author, query, self.authors, translations=translations)
         
     def testParams(self):
+        """
+        Test passing optional query parameters
+        """
         query = "SELECT * FROM raw_query_author WHERE first_name = %s"
         params = [self.authors[2].first_name]
         results = Author.objects.raw(query=query, params=params)
@@ -125,10 +159,16 @@ class RawQueryTests(TestCase):
         self.assertEqual(len(results), 1)
         
     def testManyToMany(self):
+        """
+        Test of a simple raw query against a model containing a m2m field
+        """
         query = "SELECT * FROM raw_query_reviewer"
         self.assertSuccessfulRawQuery(Reviewer, query, self.reviewers)
         
     def testExtraConversions(self):
+        """
+        Test to insure that extra tranlations are ignored.
+        """
         query = "SELECT * FROM raw_query_author"
         translations = (('something', 'else'),)
         self.assertSuccessfulRawQuery(Author, query, self.authors, translations=translations)
