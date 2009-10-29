@@ -3,11 +3,6 @@ import types
 import sys
 import os
 from itertools import izip
-try:
-    set
-except NameError:
-    from sets import Set as set     # Python 2.3 fallback.
-
 import django.db.models.manager     # Imported to register signal handler.
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned, FieldError
 from django.db.models.fields import AutoField, FieldDoesNotExist
@@ -21,7 +16,6 @@ from django.db.models.loading import register_models, get_model
 from django.utils.functional import curry
 from django.utils.encoding import smart_str, force_unicode, smart_unicode
 from django.conf import settings
-
 
 class ModelBase(type):
     """
@@ -236,7 +230,6 @@ class ModelBase(type):
 
         signals.class_prepared.send(sender=cls)
 
-
 class Model(object):
     __metaclass__ = ModelBase
     _deferred = False
@@ -300,7 +293,14 @@ class Model(object):
                         if rel_obj is None and field.null:
                             val = None
                 else:
-                    val = kwargs.pop(field.attname, field.get_default())
+                    try:
+                        val = kwargs.pop(field.attname)
+                    except KeyError:
+                        # This is done with an exception rather than the
+                        # default argument on pop because we don't want
+                        # get_default() to be evaluated, and then not used.
+                        # Refs #12057.
+                        val = field.get_default()
             else:
                 val = field.get_default()
             if is_related_object:
@@ -353,7 +353,7 @@ class Model(object):
         """
         data = self.__dict__
         if not self._deferred:
-            return (self.__class__, (), data)
+            return super(Model, self).__reduce__()
         defers = []
         pk_val = None
         for field in self._meta.fields:
@@ -366,6 +366,7 @@ class Model(object):
                     # once.
                     obj = self.__class__.__dict__[field.attname]
                     model = obj.model_ref()
+
         return (model_unpickle, (model, defers), data)
 
     def _get_pk_val(self, meta=None):
@@ -467,7 +468,7 @@ class Model(object):
             if pk_set:
                 # Determine whether a record with the primary key already exists.
                 if (force_update or (not force_insert and
-                        manager.filter(pk=pk_val).extra(select={'a': 1}).values('a').order_by())):
+                        manager.filter(pk=pk_val).exists())):
                     # It does already exist, so do an UPDATE.
                     if force_update or non_pks:
                         values = [(f, None, (raw and getattr(self, f.attname) or f.pre_save(self, False))) for f in non_pks]
