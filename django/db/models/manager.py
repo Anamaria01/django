@@ -181,8 +181,8 @@ class Manager(object):
     def _update(self, values, **kwargs):
         return self.get_query_set()._update(values, **kwargs)
         
-    def raw(self, query, *args, **kwargs):
-        return RawQuerySet(model=self.model, query=query, *args, **kwargs)
+    def raw(self, query, params=None, *args, **kwargs):
+        return RawQuerySet(model=self.model, query=query, params=params, *args, **kwargs)
 
 class ManagerDescriptor(object):
     # This class ensures managers aren't accessible via model instances.
