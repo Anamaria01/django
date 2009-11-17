@@ -7,61 +7,12 @@ from django.db.models.sql.query import InvalidQueryException
 
 class RawQueryTests(TestCase):
     
-    def setUp(self):
-        self.authors = []
-        self.books = []
-        self.coffees = []
-        self.reviewers = []
-        
-        self.authors.append(Author.objects.create(
-            first_name="Joe",
-            last_name="Smith",
-            dob=datetime(year=1950, month=9, day=20),
-        ))
-        self.authors.append(Author.objects.create(
-            first_name="Jill",
-            last_name="Doe",
-            dob=datetime(year=1920, month=4, day=2),
-        ))
-        self.authors.append(Author.objects.create(
-            first_name="Bob",
-            last_name="Smith",
-            dob=datetime(year=1986, month=1, day=25),
-        ))
-        self.authors.append(Author.objects.create(
-            first_name="Bill",
-            last_name="Jones",
-            dob=datetime(year=1932, month=5, day=10),
-        ))
-        
-        self.books.append(Book.objects.create(
-            title = 'The awesome book',
-            author = self.authors[0],
-        ))
-
-        self.books.append(Book.objects.create(
-            title = 'The horrible book',
-            author = self.authors[0],
-        ))
-
-        self.books.append(Book.objects.create(
-            title = 'Another awesome book',
-            author = self.authors[0],
-        ))
-        
-        self.books.append(Book.objects.create(
-            title = 'Some other book',
-            author = self.authors[2],
-        ))
-        
-        self.coffees.append(Coffee.objects.create(brand="dunkin doughnuts"))
-        self.coffees.append(Coffee.objects.create(brand="starbucks"))
-        
-        self.reviewers.append(Reviewer.objects.create())
-        self.reviewers.append(Reviewer.objects.create())
-        self.reviewers[0].reviewed.add(self.books[3])
-        self.reviewers[0].reviewed.add(self.books[1])
-        self.reviewers[0].reviewed.add(self.books[2])
+    def __init__(self, *args, **kwargs):
+        super(RawQueryTests, self).__init__(*args, **kwargs)
+        self.authors = list(Author.objects.all())
+        self.books = list(Book.objects.all())
+        self.coffees = list(Coffee.objects.all())
+        self.reviewers = list(Reviewer.objects.all())
         
     def assertSuccessfulRawQuery(self, model, query, expected_results, \
             expected_annotations=(), params=[], translations=None):
