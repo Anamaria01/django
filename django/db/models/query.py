@@ -257,7 +257,7 @@ class QuerySet(object):
         Returns a dictionary containing the calculations (aggregation)
         over the current queryset
 
-        If args is present the expression is passed as a kwarg ussing
+        If args is present the expression is passed as a kwarg using
         the Aggregate object's default alias.
         """
         for arg in args:

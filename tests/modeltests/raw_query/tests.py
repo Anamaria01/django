@@ -118,7 +118,7 @@ class RawQueryTests(TestCase):
         
     def testExtraConversions(self):
         """
-        Test to insure that extra tranlations are ignored.
+        Test to insure that extra translations are ignored.
         """
         query = "SELECT * FROM raw_query_author"
         translations = (('something', 'else'),)
