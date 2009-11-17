@@ -352,22 +352,30 @@ class Model(object):
         only module-level classes can be pickled by the default path.
         """
         data = self.__dict__
-        if not self._deferred:
-            return super(Model, self).__reduce__()
+        model = self.__class__
+        # The obvious thing to do here is to invoke super().__reduce__()
+        # for the non-deferred case. Don't do that.
+        # On Python 2.4, there is something wierd with __reduce__,
+        # and as a result, the super call will cause an infinite recursion.
+        # See #10547 and #12121.
         defers = []
         pk_val = None
-        for field in self._meta.fields:
-            if isinstance(self.__class__.__dict__.get(field.attname),
-                    DeferredAttribute):
-                defers.append(field.attname)
-                if pk_val is None:
-                    # The pk_val and model values are the same for all
-                    # DeferredAttribute classes, so we only need to do this
-                    # once.
-                    obj = self.__class__.__dict__[field.attname]
-                    model = obj.model_ref()
-
-        return (model_unpickle, (model, defers), data)
+        if self._deferred:
+            from django.db.models.query_utils import deferred_class_factory
+            factory = deferred_class_factory
+            for field in self._meta.fields:
+                if isinstance(self.__class__.__dict__.get(field.attname),
+                        DeferredAttribute):
+                    defers.append(field.attname)
+                    if pk_val is None:
+                        # The pk_val and model values are the same for all
+                        # DeferredAttribute classes, so we only need to do this
+                        # once.
+                        obj = self.__class__.__dict__[field.attname]
+                        model = obj.model_ref()
+        else:
+            factory = simple_class_factory
+        return (model_unpickle, (model, defers, factory), data)
 
     def _get_pk_val(self, meta=None):
         if not meta:
@@ -429,7 +437,7 @@ class Model(object):
         else:
             meta = cls._meta
 
-        if origin:
+        if origin and not meta.auto_created:
             signals.pre_save.send(sender=origin, instance=self, raw=raw)
 
         # If we are in a raw save, save the object exactly as presented.
@@ -502,7 +510,7 @@ class Model(object):
                     setattr(self, meta.pk.attname, result)
             transaction.commit_unless_managed()
 
-        if origin:
+        if origin and not meta.auto_created:
             signals.post_save.send(sender=origin, instance=self,
                 created=(not record_exists), raw=raw)
 
@@ -539,7 +547,12 @@ class Model(object):
                         rel_descriptor = cls.__dict__[rel_opts_name]
                         break
                 else:
-                    raise AssertionError("Should never get here.")
+                    # in the case of a hidden fkey just skip it, it'll get
+                    # processed as an m2m
+                    if not related.field.rel.is_hidden():
+                        raise AssertionError("Should never get here.")
+                    else:
+                        continue
                 delete_qs = rel_descriptor.delete_manager(self).all()
                 for sub_obj in delete_qs:
                     sub_obj._collect_sub_objects(seen_objs, self.__class__, related.field.null)
@@ -647,12 +660,20 @@ def get_absolute_url(opts, func, self, *args, **kwargs):
 class Empty(object):
     pass
 
-def model_unpickle(model, attrs):
+def simple_class_factory(model, attrs):
+    """Used to unpickle Models without deferred fields.
+
+    We need to do this the hard way, rather than just using
+    the default __reduce__ implementation, because of a
+    __deepcopy__ problem in Python 2.4
+    """
+    return model
+
+def model_unpickle(model, attrs, factory):
     """
     Used to unpickle Model subclasses with deferred fields.
     """
-    from django.db.models.query_utils import deferred_class_factory
-    cls = deferred_class_factory(model, attrs)
+    cls = factory(model, attrs)
     return cls.__new__(cls)
 model_unpickle.__safe_for_unpickle__ = True
 
