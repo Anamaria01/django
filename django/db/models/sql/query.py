@@ -49,7 +49,7 @@ class RawQuery(object):
         return [column_meta[0] for column_meta in self.cursor.description]
         
     def validate_sql(self, sql):
-        if not sql.lower().startswith('select'):
+        if not sql.lower().strip().startswith('select'):
             raise InvalidQueryException('Raw SQL are limited to SELECT queries.  Use connection.cursor for any other query types.')
             
     def __len__(self):
