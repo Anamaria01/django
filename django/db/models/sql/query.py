@@ -23,9 +23,9 @@ from django.core.exceptions import FieldError
 from datastructures import EmptyResultSet, Empty, MultiJoin
 from constants import *
 
-__all__ = ['Query', 'BaseQuery', 'RawQuery', 'InvalidQueryException']
+__all__ = ['Query', 'BaseQuery', 'RawQuery', 'InvalidQuery']
 
-class InvalidQueryException(Exception):
+class InvalidQuery(Exception):
     """
     The query passed to raw isn't a safe query to use with raw.
     """
@@ -50,7 +50,7 @@ class RawQuery(object):
         
     def validate_sql(self, sql):
         if not sql.lower().strip().startswith('select'):
-            raise InvalidQueryException('Raw SQL are limited to SELECT queries.  Use connection.cursor for any other query types.')
+            raise InvalidQuery('Raw SQL are limited to SELECT queries.  Use connection.cursor for any other query types.')
             
     def __len__(self):
         return self.cursor.rowcount

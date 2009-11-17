@@ -3,7 +3,7 @@ from datetime import datetime
 from models import Author, Book, Coffee, Reviewer
 
 from django.db.models.query import InsuficientFieldsException
-from django.db.models.sql.query import InvalidQueryException
+from django.db.models.sql.query import InvalidQuery
 
 class RawQueryTests(TestCase):
     
@@ -147,7 +147,7 @@ class RawQueryTests(TestCase):
         
     def testInvalidQuery(self):
         query = "UPDATE raw_query_author SET first_name='thing' WHERE first_name='Joe'"
-        self.assertRaises(InvalidQueryException, Author.objects.raw, query)
+        self.assertRaises(InvalidQuery, Author.objects.raw, query)
         
     def testWhiteSpaceQuery(self):
         query = "    SELECT * FROM raw_query_author"
