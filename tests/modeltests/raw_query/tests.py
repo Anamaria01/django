@@ -2,7 +2,7 @@ from django.test import TestCase
 from datetime import datetime
 from models import Author, Book, Coffee, Reviewer
 
-from django.db.models.query import InsuficientFieldsException
+from django.db.models.query import InsuficientFields
 from django.db.models.sql.query import InvalidQuery
 
 class RawQueryTests(TestCase):
@@ -130,7 +130,7 @@ class RawQueryTests(TestCase):
         try:
             results = Author.objects.raw(query)
             results_list = list(results)
-        except InsuficientFieldsException:
+        except InsuficientFields:
             raised = True
 
         self.assertTrue(raised)
