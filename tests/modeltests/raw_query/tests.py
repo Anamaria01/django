@@ -6,13 +6,6 @@ from django.db.models.query import InsuficientFields
 from django.db.models.sql.query import InvalidQuery
 
 class RawQueryTests(TestCase):
-    
-    def __init__(self, *args, **kwargs):
-        super(RawQueryTests, self).__init__(*args, **kwargs)
-        self.authors = list(Author.objects.all())
-        self.books = list(Book.objects.all())
-        self.coffees = list(Coffee.objects.all())
-        self.reviewers = list(Reviewer.objects.all())
         
     def assertSuccessfulRawQuery(self, model, query, expected_results, \
             expected_annotations=(), params=[], translations=None):
@@ -56,14 +49,16 @@ class RawQueryTests(TestCase):
         Basic test of raw query with a simple database query
         """
         query = "SELECT * FROM raw_query_author"
-        self.assertSuccessfulRawQuery(Author, query, self.authors)
+        authors = Author.objects.all()
+        self.assertSuccessfulRawQuery(Author, query, authors)
 
     def testFkeyRawQuery(self):
         """
         Test of a simple raw query against a model containing a foreign key
         """
         query = "SELECT * FROM raw_query_book"
-        self.assertSuccessfulRawQuery(Book, query, self.books)
+        books = Book.objects.all()
+        self.assertSuccessfulRawQuery(Book, query, books)
         
     def testDBColumnHandler(self):
         """
@@ -71,7 +66,8 @@ class RawQueryTests(TestCase):
         db_column defined.
         """
         query = "SELECT * FROM raw_query_coffee"
-        self.assertSuccessfulRawQuery(Coffee, query, self.coffees)
+        coffees = Coffee.objects.all()
+        self.assertSuccessfulRawQuery(Coffee, query, coffees)
     
     def testOrderHandler(self):
         """
@@ -86,7 +82,8 @@ class RawQueryTests(TestCase):
 
         for select in selects:
             query = "SELECT %s FROM raw_query_author" % select
-            self.assertSuccessfulRawQuery(Author, query, self.authors)
+            authors = Author.objects.all()
+            self.assertSuccessfulRawQuery(Author, query, authors)
             
     def testTranslations(self):
         """
@@ -98,16 +95,18 @@ class RawQueryTests(TestCase):
             ('first', 'first_name'),
             ('last', 'last_name'),
         )
-        self.assertSuccessfulRawQuery(Author, query, self.authors, translations=translations)
+        authors = Author.objects.all()
+        self.assertSuccessfulRawQuery(Author, query, authors, translations=translations)
         
     def testParams(self):
         """
         Test passing optional query parameters
         """
         query = "SELECT * FROM raw_query_author WHERE first_name = %s"
-        params = [self.authors[2].first_name]
+        author = Author.objects.all()[2]
+        params = [author.first_name]
         results = Author.objects.raw(query=query, params=params)
-        self.assertProcessed(results, [self.authors[2]])
+        self.assertProcessed(results, [author])
         self.assertNoAnnotations(results)
         self.assertEqual(len(results), 1)
         
@@ -116,7 +115,8 @@ class RawQueryTests(TestCase):
         Test of a simple raw query against a model containing a m2m field
         """
         query = "SELECT * FROM raw_query_reviewer"
-        self.assertSuccessfulRawQuery(Reviewer, query, self.reviewers)
+        reviewers = Reviewer.objects.all()
+        self.assertSuccessfulRawQuery(Reviewer, query, reviewers)
         
     def testExtraConversions(self):
         """
@@ -124,7 +124,8 @@ class RawQueryTests(TestCase):
         """
         query = "SELECT * FROM raw_query_author"
         translations = (('something', 'else'),)
-        self.assertSuccessfulRawQuery(Author, query, self.authors, translations=translations)
+        authors = Author.objects.all()
+        self.assertSuccessfulRawQuery(Author, query, authors, translations=translations)
         
     def testInsufficientColumns(self):
         query = "SELECT first_name, dob FROM raw_query_author"
@@ -145,7 +146,8 @@ class RawQueryTests(TestCase):
             ('book_count', 1),
             ('book_count', 0),
         )
-        self.assertSuccessfulRawQuery(Author, query, self.authors, expected_annotations)
+        authors = Author.objects.all()
+        self.assertSuccessfulRawQuery(Author, query, authors, expected_annotations)
         
     def testInvalidQuery(self):
         query = "UPDATE raw_query_author SET first_name='thing' WHERE first_name='Joe'"
@@ -153,4 +155,5 @@ class RawQueryTests(TestCase):
         
     def testWhiteSpaceQuery(self):
         query = "    SELECT * FROM raw_query_author"
-        self.assertSuccessfulRawQuery(Author, query, self.authors)
+        authors = Author.objects.all()
+        self.assertSuccessfulRawQuery(Author, query, authors)
