@@ -40,9 +40,11 @@ class RawQueryTests(TestCase):
         Check that the passed raw query results contain the expected
         annotations
         """
-        for result in results:
-          for annotation in expected_annotations:
-            self.assertTrue(hasattr(result, annotation))
+        if expected_annotations:
+            for index, result in enumerate(results):
+                annotation, value = expected_annotations[index]
+                self.assertTrue(hasattr(result, annotation))
+                self.assertEqual(getattr(result, annotation), value)
         
     def testSimpleRawQuery(self):
         """
