@@ -35,35 +35,48 @@ class RawQuery(object):
     """
     A single raw SQL query
     """
-    
+
     def __init__(self, sql, connection, params=None):
         self.validate_sql(sql)
         self.params = params or ()
         self.sql = sql
         self.connection = connection
         self.cursor = connection.cursor()
-        self.cursor.execute(sql, params)
-        
-        
+        self.cursor.execute(sql, self.params)
+        self._cache = None
+        self._count = None
+
+
     def get_columns(self):
         return [column_meta[0] for column_meta in self.cursor.description]
-        
+
     def validate_sql(self, sql):
         if not sql.lower().strip().startswith('select'):
             raise InvalidQuery('Raw SQL are limited to SELECT queries.  Use connection.cursor for any other query types.')
-            
+
     def __len__(self):
-        return self.cursor.rowcount
-        
+        if self._count is None:
+            self._count = self.cursor.rowcount
+            # Handle sqlite's quirky rowcount behavior
+            if self._count == -1:
+                self._populate_cache()
+                self._count = len(self._cache)
+
+        return self._count
+
     def __iter__(self):
-           values = self.cursor.fetchone()
-           while values:
-               yield values
-               values = self.cursor.fetchone()
-               
+        self._populate_cache()
+        for value in self._cache:
+            yield value
+
+
     def __str__(self):
         return self.sql % self.params
-    
+
+    def _populate_cache(self):
+        if self._cache is None:
+            self._cache = self.cursor.fetchall()
+
 class BaseQuery(object):
     """
     A single SQL query.
