@@ -1092,8 +1092,6 @@ class RawQuerySet(object):
         self.raw_results = query_obj or sql.RawQuery(sql=query, connection=connection, params=params)
         self.query = query
         self.params = params or ()
-        self._kwargs = {}
-        self._annotations = ()
         # Figure out the column names
         self.columns = self.raw_results.get_columns()
         # Adjust any column names which don't match field names
@@ -1123,8 +1121,8 @@ class RawQuerySet(object):
         return self.query % self.params
             
     def transform_results(self, values):
-        kwargs = self._kwargs
-        annotations = self._annotations
+        kwargs = {}
+        annotations = ()
         
         # Associate fields to values
         for pos, value in enumerate(values):
@@ -1148,8 +1146,6 @@ class RawQuerySet(object):
             setattr(instance, field, value)
         
         # make the kwargs and annotation metadata available to the unit tests
-        self._kwargs = kwargs
-        self._annotations = annotations
         return instance
 
 def insert_query(model, values, return_id=False, raw_values=False):

@@ -47,7 +47,9 @@ class RawQueryTests(TestCase):
         Check that the passed raw query results contain the expected
         annotations
         """
-        self.assertEqual(results._annotations, expected_annotations)
+        for result in results:
+          for annotation in expected_annotations:
+            self.assertTrue(hasattr(result, annotation))
         
     def testSimpleRawQuery(self):
         """
