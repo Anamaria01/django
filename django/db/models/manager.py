@@ -180,7 +180,7 @@ class Manager(object):
 
     def _update(self, values, **kwargs):
         return self.get_query_set()._update(values, **kwargs)
-        
+
     def raw(self, query, params=None, *args, **kwargs):
         return RawQuerySet(model=self.model, query=query, params=params, *args, **kwargs)
 

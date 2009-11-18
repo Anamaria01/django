@@ -1077,14 +1077,14 @@ def delete_objects(seen_objs):
 
 class InsuficientFields(Exception):
     """
-    The query passed to raw doesn't include all of the fields needed to build 
+    The query passed to raw doesn't include all of the fields needed to build
     a model instance.
     """
     pass
 
 class RawQuerySet(object):
     """
-    Provides an iterator which converts the results of raw database 
+    Provides an iterator which converts the results of raw database
     queries into annotated model instances.
     """
     def __init__(self, query, model=None, query_obj=None, params=None, translations=None):
@@ -1103,48 +1103,48 @@ class RawQuerySet(object):
                 except ValueError:
                     # Ignore transations for non-existant column names
                     pass
-        
+
         # Build a list of column names known by the model
         self.model_fields = {}
         for field in model._meta.fields:
             name, column = field.get_attname_column()
             self.model_fields[column] = name
-            
+
     def __iter__(self):
         for row in self.raw_results:
             yield self.transform_results(row)
-    
+
     def __len__(self):
         return len(self.raw_results)
-        
+
     def __repr__(self):
         return self.query % self.params
-            
+
     def transform_results(self, values):
         kwargs = {}
         annotations = ()
-        
+
         # Associate fields to values
         for pos, value in enumerate(values):
             column = self.columns[pos]
-            
+
             # Separate properties from annotations
             if column in self.model_fields.keys():
                 kwargs[self.model_fields[column]] = value
             else:
                 annotations += (column, value),
-                
+
         if len(kwargs) < len(self.model_fields):
             missing = [column for column, field in self.model_fields.items() if field not in kwargs.keys()]
             raise InsuficientFields("They query passed doesn't contain all of the needed fields.  The missing fields are: %s" % ', '.join(missing))
-            
+
         # Construct model instance
         instance = self.model(**kwargs)
-        
+
         # Apply annotations
         for field, value in annotations:
             setattr(instance, field, value)
-        
+
         # make the kwargs and annotation metadata available to the unit tests
         return instance
 
