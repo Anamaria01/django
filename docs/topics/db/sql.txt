@@ -4,7 +4,40 @@ Performing raw SQL queries
 ==========================
 
 Feel free to write custom SQL statements in custom model methods and
-module-level methods. The object ``django.db.connection`` represents the
+module-level methods. There are two methods for performing raw SQL queries in
+Django, the ``Model.objects.raw()`` method and the ``cursor.execute()``
+method.
+    
+Retrieving model instances with a raw query
+-------------------------------------------
+
+Often when you write custom SQL, you are doing so because you need to perform filtering or ordering which is too complex to express via the Django ORM.  At the end of the day however, you still want to have a collection of model instances to work with.  Django offers a method on manager classes to make this easy:
+
+.. function:: Model.objects.raw(query[, params=None, translations=None])
+
+Returns a ``RawQuerySet`` -- an object similar to a ``QuerySet`` which
+evaluates the provided query and returns populated model instances.  Any
+fields returned by the provided query which are not defined in the given model
+are added to the returned model instances as annotations.
+
+``query`` 
+    should be a parameterized SQL query.  All of the fields in a model
+    must be returned by this query.  The order which the fields are returned
+    does not matter.
+``params`` 
+    should be a collection of parameters to replace any placeholders in
+    ``query``.
+``translations``
+    should be a tuple of tuples to replace the column names returned by the query
+
+.. versionadded:: 1.2
+    The ``Model.objects.raw()`` method for performing raw SQL queries was
+    added in version 1.2.  Before version 1.2 the ``cursor.execute()`` method 
+    is the only way to perform raw SQL queries.
+
+
+
+The object ``django.db.connection`` represents the
 current database connection, and ``django.db.transaction`` represents the
 current database transaction. To use the database connection, call
 ``connection.cursor()`` to get a cursor object. Then, call
