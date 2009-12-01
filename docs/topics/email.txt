@@ -401,7 +401,7 @@ SMTP backend
 
 This is the default backend. E-mail will be sent through a SMTP server.
 The server address and authentication credentials are set in the
-:setting:`EMAIL_HOST`, :setting:`EMAIL_POST`, :setting:`EMAIL_HOST_USER`,
+:setting:`EMAIL_HOST`, :setting:`EMAIL_PORT`, :setting:`EMAIL_HOST_USER`,
 :setting:`EMAIL_HOST_PASSWORD` and :setting:`EMAIL_USE_TLS` settings in your
 settings file.
 
@@ -421,6 +421,8 @@ want to specify it explicitly, put the following in your settings::
     still available in ``django.core.mail`` as an alias for the SMTP backend.
     New code should use :meth:`~django.core.mail.get_connection` instead.
 
+.. _topic-email-console-backend:
+
 Console backend
 ~~~~~~~~~~~~~~~
 
@@ -435,6 +437,8 @@ To specify this backend, put the following in your settings::
 
 This backend is not intended for use in production -- it is provided as a
 convenience that can be used during development.
+
+.. _topic-email-file-backend:
 
 File backend
 ~~~~~~~~~~~~
@@ -453,6 +457,8 @@ To specify this backend, put the following in your settings::
 This backend is not intended for use in production -- it is provided as a
 convenience that can be used during development.
 
+.. _topic-email-memory-backend:
+
 In-memory backend
 ~~~~~~~~~~~~~~~~~
 
@@ -468,6 +474,8 @@ To specify this backend, put the following in your settings::
 
 This backend is not intended for use in production -- it is provided as a
 convenience that can be used during development and testing.
+
+.. _topic-email-dummy-backend:
 
 Dummy backend
 ~~~~~~~~~~~~~
