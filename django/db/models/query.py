@@ -1118,7 +1118,8 @@ class RawQuerySet(object):
         return len(self.raw_results)
 
     def __repr__(self):
-        return self.query % self.params
+        query = self.query % self.params
+        return '<RawQuerySet: "%s">' % query
 
     def transform_results(self, values):
         kwargs = {}
